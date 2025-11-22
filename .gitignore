@@ -22,11 +22,3 @@ yarn-error.*
 .env.development
 .env.production
 *.tsbuildinfo
-firestone.rules
-package-lock.json
-package.json
-backend/package-lock.json
-backend/package.json
-frontend/app.json
-frontend/eas.json
-frontend/package.json
