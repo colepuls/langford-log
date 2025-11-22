@@ -5,6 +5,7 @@ import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import LogEntryScreen from './screens/LogEntryScreen';
 import AdminScreen from './screens/AdminScreen';
+import LogsScreen from './screens/LogsScreen';
 import { firebaseAuth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { ActivityIndicator, View } from 'react-native';
@@ -43,6 +44,7 @@ export default function App() {
               initialParams={{ userEmail: user.email }}
             />
             <Stack.Screen name="Admin" component={AdminScreen} />
+            <Stack.Screen name="Logs" component={LogsScreen} />
           </>
         ) : (
           <>

@@ -1,13 +1,8 @@
-# dependencies
 node_modules/
-
-# Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
-
-# Native
 .kotlin/
 *.orig.*
 *.jks
@@ -15,25 +10,23 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
-
-# Metro
 .metro-health-check*
-
-# debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
-
-# macOS
 .DS_Store
 *.pem
-
-# local env files
 .env*.local
 .env
 .env.local
 .env.development
 .env.production
-
-# typescript
 *.tsbuildinfo
+firestone.rules
+package-lock.json
+package.json
+backend/package-lock.json
+backend/package.json
+frontend/app.json
+frontend/eas.json
+frontend/package.json

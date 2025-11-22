@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "Langford Log",
     "slug": "frontend",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,11 +14,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "Langford-Log",
+      "bundleIdentifier": "com.yomonos.langfordlog",
+      "buildNumber": "13",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Allow Langford Log to access your camera.",
-        "NSPhotoLibraryUsageDescription": "Allow Langford Log to access your photos."
+        "NSCameraUsageDescription": "This app uses the camera so foremen can take job site photos to include in their daily logs.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to allow foremen to attach existing job site photos to their reports."
       }
     },
     "android": {

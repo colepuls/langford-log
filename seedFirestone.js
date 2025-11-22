@@ -59,13 +59,13 @@ const EMPLOYEES = {
 };
 
 async function seed() {
-  // ✅ Add missing foremen only
+  // Add missing foremen only
   for (const f of FOREMEN) {
     await setDoc(doc(db, 'foremen', f.name), f, { merge: true });
     console.log(`Ensured foreman: ${f.name}`);
   }
 
-  // ✅ Merge new employees without overwriting
+  // Merge new employees without overwriting
   for (const [category, list] of Object.entries(EMPLOYEES)) {
     const docRef = doc(db, 'employees', category);
     const docSnap = await getDoc(docRef);

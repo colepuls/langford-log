@@ -54,14 +54,6 @@ export default function SignupScreen({ navigation }) {
       return;
     }
 
-    // Check if email is authorized
-    const allowedEmails = ['brian@langfordmechanical.com', 'colepuls@me.com'];
-  
-    if (!allowedEmails.includes(email.trim().toLowerCase())) {
-      Alert.alert('Signup Failed', 'You are not authorized to create an account. Please contact your administrator.');
-      return;
-    }
-
     setLoading(true);
   
     try {

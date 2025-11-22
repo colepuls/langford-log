@@ -1,9 +1,10 @@
+require('dns').setDefaultResultOrder('ipv4first');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
-const path = require('path');
+// const path = require('path');
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
@@ -11,20 +12,32 @@ const upload = multer({ dest: 'uploads/' });
 app.use(cors());
 app.use(express.json());
 
+// SINGLE, POOLED TRANSPORTER (outside the route)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // Gmail App Password
+  },
+  pool: true,
+  maxConnections: 1,
+  maxMessages: 30,
+  connectionTimeout: 15000,
+  greetingTimeout: 8000,
+  socketTimeout: 20000,
+});
+
 app.post('/submit-log', upload.array('photos', 20), async (req, res) => {
   const { foreman, foremanHours, date, jobNumber, employees, taskDescription, userEmail } = req.body;
-  const parsedEmployees = JSON.parse(employees || '[]');
 
-  // Use Gmail SMTP for better reliability
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, // Use App Password for Gmail
-    },
-  });
+  let parsedEmployees = [];
+  try {
+    parsedEmployees = JSON.parse(employees || '[]');
+  } catch {
+    parsedEmployees = [];
+  }
 
-  const attachments = req.files.map(file => ({
+  const attachments = (req.files || []).map((file) => ({
     filename: file.originalname,
     path: file.path,
   }));
@@ -33,8 +46,7 @@ app.post('/submit-log', upload.array('photos', 20), async (req, res) => {
     from: process.env.EMAIL_USER, // Always use the authenticated email as sender
     to: 'kayla@langfordmechanical.com',
     subject: `Daily Log - ${date} - ${foreman}`,
-    text: `
-Submitted by: ${userEmail}
+    text: `Submitted by: ${userEmail}
 Foreman: ${foreman} - ${foremanHours} hours
 Date: ${date}
 Job #: ${jobNumber}
@@ -44,7 +56,7 @@ ${parsedEmployees.map((e, i) => `${i + 1}. ${e.name} - ${e.hours} hours`).join('
 
 Task Description:
 ${taskDescription}
-    `,
+`,
     attachments,
   };
 
@@ -56,8 +68,7 @@ ${taskDescription}
     console.error('Email failed:', err);
     res.status(500).json({ error: 'Failed to send email: ' + err.message });
   } finally {
-    // Clean up uploaded photos
-    req.files.forEach(file => fs.unlink(file.path, () => {}));
+    (req.files || []).forEach((file) => fs.unlink(file.path, () => {}));
   }
 });
 

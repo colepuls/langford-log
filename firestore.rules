@@ -11,6 +11,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
     
+    // User logs: each user can read/write only their own logs
+    match /users/{userId}/logs/{logId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

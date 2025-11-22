@@ -25,7 +25,7 @@ import {
   arrayUnion,
 } from 'firebase/firestore';
 import { firebaseAuth, app } from '../firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, deleteUser } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 
 const db = getFirestore(app);
@@ -53,6 +53,7 @@ export default function AdminScreen() {
   const [foremanCategoryDropdownVisible, setForemanCategoryDropdownVisible] = useState(false);
   const [employeeCategoryDropdownVisible, setEmployeeCategoryDropdownVisible] = useState(false);
   const [editCategoryDropdownVisible, setEditCategoryDropdownVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   // Get unique categories from existing data
   const getUniqueCategories = () => {
@@ -270,7 +271,42 @@ export default function AdminScreen() {
   };
 
   const handleLogout = async () => {
-    await signOut(firebaseAuth);
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', style: 'destructive', onPress: async () => { setSettingsVisible(false); await signOut(firebaseAuth); } }
+      ]
+    );
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account. This action cannot be undone. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              if (firebaseAuth.currentUser) {
+                await deleteUser(firebaseAuth.currentUser);
+                setSettingsVisible(false);
+              }
+            } catch (err) {
+              if (err && err.code === 'auth/requires-recent-login') {
+                Alert.alert('Re-authentication Required', 'Please log out and sign in again, then try deleting your account.');
+              } else {
+                Alert.alert('Error', 'Failed to delete account. Please try again.');
+              }
+            }
+          }
+        }
+      ]
+    );
   };
 
   const goBackToLogEntry = () => {
@@ -324,10 +360,10 @@ export default function AdminScreen() {
             <Text style={styles.navButtonText}>Log Entry</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={handleLogout}
+            style={styles.settingsButton}
+            onPress={() => setSettingsVisible(true)}
           >
-            <Text style={styles.logoutButtonText}>Logout</Text>
+            <Text style={styles.settingsButtonText}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -591,6 +627,34 @@ export default function AdminScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Settings Modal */}
+      <Modal
+        visible={settingsVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.dropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setSettingsVisible(false)}
+        >
+          <View style={styles.dropdownModal}
+          >
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#2c3e50', textAlign: 'center' }}>Settings</Text>
+            <TouchableOpacity style={[styles.settingsActionButton, { backgroundColor: '#e74c3c' }]} onPress={handleLogout}>
+              <Text style={styles.settingsActionText}>Logout</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.settingsActionButton, { backgroundColor: '#c0392b' }]} onPress={handleDeleteAccount}>
+              <Text style={styles.settingsActionText}>Delete Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.settingsActionButton, { backgroundColor: '#95a5a6' }]} onPress={() => setSettingsVisible(false)}>
+              <Text style={styles.settingsActionText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -658,15 +722,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  logoutButton: {
-    backgroundColor: '#e74c3c',
+  settingsButton: {
+    backgroundColor: '#7f8c8d',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,
   },
-  logoutButtonText: {
+  settingsButtonText: {
     color: '#fff',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  settingsActionButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  settingsActionText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
   flatListContainer: { 

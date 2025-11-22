@@ -22,8 +22,11 @@ import {
   getFirestore,
   collection,
   getDocs,
+  addDoc,
+  serverTimestamp,
+  doc,
 } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+import { signOut, deleteUser } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { onSnapshot } from 'firebase/firestore';
 
@@ -46,6 +49,7 @@ export default function LogEntryScreen({ route }) {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pickerValue, setPickerValue] = useState('');
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   // Modal state for dropdowns
   const [foremanDropdownVisible, setForemanDropdownVisible] = useState(false);
@@ -82,7 +86,35 @@ export default function LogEntryScreen({ route }) {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: async () => await signOut(firebaseAuth) }
+        { text: 'Logout', style: 'destructive', onPress: async () => { setSettingsVisible(false); await signOut(firebaseAuth); } }
+      ]
+    );
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account. This action cannot be undone. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              if (firebaseAuth.currentUser) {
+                await deleteUser(firebaseAuth.currentUser);
+                setSettingsVisible(false);
+              }
+            } catch (err) {
+              if (err && err.code === 'auth/requires-recent-login') {
+                Alert.alert('Re-authentication Required', 'Please log out and sign in again, then try deleting your account.');
+              } else {
+                Alert.alert('Error', 'Failed to delete account. Please try again.');
+              }
+            }
+          }
+        }
       ]
     );
   };
@@ -168,11 +200,6 @@ export default function LogEntryScreen({ route }) {
       return;
     }
 
-    if (selectedEmployees.length === 0) {
-      Alert.alert('No Employees', 'Please add at least one employee.');
-      return;
-    }
-
     // Check if all employees have hours
     const missingHours = selectedEmployees.filter(emp => !employeeHours[emp] || employeeHours[emp].trim() === '');
     if (missingHours.length > 0) {
@@ -211,6 +238,20 @@ export default function LogEntryScreen({ route }) {
 
       const result = await response.json();
       console.log('API response:', result);
+      // Save to Firestore for this user
+      if (firebaseAuth.currentUser) {
+        const userLogsCol = collection(db, 'users', firebaseAuth.currentUser.uid, 'logs');
+        await addDoc(userLogsCol, {
+          userEmail,
+          foreman: foremanName,
+          foremanHours,
+          date,
+          jobNumber,
+          employees,
+          taskDescription,
+          createdAt: serverTimestamp(),
+        });
+      }
       
       Alert.alert('Success', 'Log submitted successfully!', [
         { text: 'OK', onPress: () => {
@@ -270,13 +311,19 @@ export default function LogEntryScreen({ route }) {
             resizeMode="contain"
           />
           <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>Daily Log Entry</Text>
+            <Text style={styles.headerTitle}>Log Entry</Text>
             <Text style={styles.headerSubtitle}>Langford Mechanical</Text>
           </View>
         </View>
         
         <View style={styles.headerButtons}>
-          {userEmail.toLowerCase() === 'brian@langfordmechanical.com' && (
+          <TouchableOpacity 
+            style={styles.logsButton}
+            onPress={() => navigation.navigate('Logs')}
+          >
+            <Text style={styles.logsButtonText}>Logs</Text>
+          </TouchableOpacity>
+          {userEmail.toLowerCase() === ('brian@langfordmechanical.com' || 'colepuls@me.com') && (
             <TouchableOpacity 
               style={styles.adminButton}
               onPress={() => navigation.navigate('Admin')}
@@ -285,10 +332,10 @@ export default function LogEntryScreen({ route }) {
             </TouchableOpacity>
           )}
           <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={handleLogout}
+            style={styles.settingsButton}
+            onPress={() => setSettingsVisible(true)}
           >
-            <Text style={styles.logoutButtonText}>Logout</Text>
+            <Text style={styles.settingsButtonText}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -301,10 +348,9 @@ export default function LogEntryScreen({ route }) {
       >
               {/* Form Sections */}
               <View style={styles.formSection}>
-                <Text style={styles.sectionTitle}>Project Information</Text>
                 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Foreman *</Text>
+                  <Text style={styles.label}>Foreman</Text>
                   <TouchableOpacity
                     style={styles.dropdownButton}
                     onPress={() => setForemanDropdownVisible(true)}
@@ -317,7 +363,7 @@ export default function LogEntryScreen({ route }) {
 
                 <View style={styles.row}>
                   <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-                    <Text style={styles.label}>Foreman Hours *</Text>
+                    <Text style={styles.label}>Hours</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="Hours"
@@ -328,7 +374,7 @@ export default function LogEntryScreen({ route }) {
                   </View>
                   
                   <View style={[styles.inputGroup, { flex: 1, marginLeft: 10 }]}>
-                    <Text style={styles.label}>Date *</Text>
+                    <Text style={styles.label}>Date</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="MM/DD/YYYY"
@@ -349,23 +395,21 @@ export default function LogEntryScreen({ route }) {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Job Number *</Text>
+                  <Text style={styles.label}>Job</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Enter job number"
+                    placeholder="Enter job name or number"
                     value={jobNumber}
                     onChangeText={setJobNumber}
-                    keyboardType="numeric"
                   />
                 </View>
               </View>
 
               {/* Employee Section */}
               <View style={styles.formSection}>
-                <Text style={styles.sectionTitle}>Employee Hours</Text>
                 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Add Employee</Text>
+                  <Text style={styles.label}>Employee</Text>
                   <View style={styles.employeeAddRow}>
                     <TouchableOpacity
                       style={[styles.dropdownButton, { flex: 1, marginRight: 10 }]}
@@ -411,12 +455,12 @@ export default function LogEntryScreen({ route }) {
 
               {/* Task Description */}
               <View style={styles.formSection}>
-                <Text style={styles.sectionTitle}>Task Description</Text>
+                <Text style={styles.sectionTitle}>Job Description</Text>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Brief Description of Daily Task *</Text>
+                  <Text style={styles.label}></Text>
                   <TextInput
                     style={[styles.input, styles.textArea]}
-                    placeholder="Describe today's tasks..."
+                    placeholder="Describe job..."
                     multiline
                     textAlignVertical="top"
                     value={taskDescription}
@@ -525,6 +569,34 @@ export default function LogEntryScreen({ route }) {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Settings Modal */}
+      <Modal
+        visible={settingsVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.dropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setSettingsVisible(false)}
+        >
+          <View style={styles.dropdownModal}
+          >
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#2c3e50', textAlign: 'center' }}>Settings</Text>
+            <TouchableOpacity style={[styles.settingsActionButton, { backgroundColor: '#e74c3c' }]} onPress={handleLogout}>
+              <Text style={styles.settingsActionText}>Logout</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.settingsActionButton, { backgroundColor: '#c0392b' }]} onPress={handleDeleteAccount}>
+              <Text style={styles.settingsActionText}>Delete Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.settingsActionButton, { backgroundColor: '#95a5a6' }]} onPress={() => setSettingsVisible(false)}>
+              <Text style={styles.settingsActionText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -592,6 +664,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  logsButton: {
+    backgroundColor: '#3498db',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  logsButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  settingsButton: {
+    backgroundColor: '#7f8c8d',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  settingsButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   logoutButton: {
     backgroundColor: '#e74c3c',
     paddingHorizontal: 12,
@@ -601,6 +695,18 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: '#fff',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  settingsActionButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  settingsActionText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
   scrollContainer: {
