@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yomonos.langfordlog",
+      "bundleIdentifier": "Langford-Log",
       "buildNumber": "13",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

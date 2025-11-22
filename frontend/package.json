@@ -31,7 +31,8 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-web": "^0.20.0",
-    "watchman": "^1.0.0"
+    "watchman": "^1.0.0",
+    "yarn": "^1.22.22"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
