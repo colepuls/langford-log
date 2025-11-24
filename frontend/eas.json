@@ -12,7 +12,16 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyBeFmbuUy_yITn8wUqXNWzC1SjTbAeHv3U",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "langfordlog.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "langfordlog",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "langfordlog.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "314671122997",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:314671122997:web:e3cd05c2b83ee95ad3bf7c",
+        "EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID": "G-6VFCXLYBR1"
+      }
     }
   },
   "submit": {

@@ -585,6 +585,7 @@ export default function LogEntryScreen({ route }) {
           <View style={styles.dropdownModal}
           >
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#2c3e50', textAlign: 'center' }}>Settings</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#2c3e50', textAlign: 'center' }}>{userEmail}</Text>
             <TouchableOpacity style={[styles.settingsActionButton, { backgroundColor: '#e74c3c' }]} onPress={handleLogout}>
               <Text style={styles.settingsActionText}>Logout</Text>
             </TouchableOpacity>
